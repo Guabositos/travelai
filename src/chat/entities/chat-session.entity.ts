@@ -22,7 +22,7 @@ export class ChatSessionEntity {
   @OneToMany(() => ChatMessageEntity, msg => msg.session, { cascade: true })
   messages: ChatMessageEntity[];
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   itinerary: Record<string, unknown> | null;
 
   @CreateDateColumn()
@@ -43,7 +43,7 @@ export class ChatMessageEntity {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata: Record<string, unknown> | null;
 
   @ManyToOne(() => ChatSessionEntity, session => session.messages, { onDelete: 'CASCADE' })

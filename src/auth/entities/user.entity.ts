@@ -22,8 +22,7 @@ export class User {
   @Column({ nullable: true })
   name: string;
 
-  @Column({ nullable: true })
-  avatar: string | null;
+
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
