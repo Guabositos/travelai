@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatSessionEntity, ChatMessageEntity } from './entities/chat-session.entity';
-import { SupervisorAgent } from '../agents/supervisor/supervisor.agent';
 import { CreateSessionDto } from './dto/chat.dto';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class ChatService {
     private sessionRepo: Repository<ChatSessionEntity>,
     @InjectRepository(ChatMessageEntity)
     private messageRepo: Repository<ChatMessageEntity>,
-    private supervisor: SupervisorAgent,
   ) {}
 
   async createSession(userId: string, dto: CreateSessionDto) {
@@ -40,34 +38,21 @@ export class ChatService {
   }
 
   async sendMessage(sessionId: string, userId: string, content: string) {
-    const session = await this.getSession(sessionId, userId);
+    // Verify session belongs to this user
+    await this.getSession(sessionId, userId);
 
     // Save user message
-    const userMsg = this.messageRepo.create({
-      role: 'user',
-      content,
-      sessionId,
-    });
+    const userMsg = this.messageRepo.create({ role: 'user', content, sessionId });
     await this.messageRepo.save(userMsg);
 
-    // Run through supervisor agent
-    const result = await this.supervisor.handleMessage(sessionId, content);
-
-    // Save assistant message
+    // Placeholder reply — swap this block for supervisor.handleMessage() when agents are ready
     const assistantMsg = this.messageRepo.create({
       role: 'assistant',
-      content: result.message,
+      content: 'Agent pipeline not connected yet. Your message was received.',
       sessionId,
-      metadata: { plan: result.plan, step: result.step },
+      metadata: {},
     });
     await this.messageRepo.save(assistantMsg);
-
-    // Update session itinerary if plan changed
-    if (result.plan) {
-      await this.sessionRepo.update(sessionId, {
-        itinerary: result.plan as unknown as Record<string, unknown>,
-      });
-    }
 
     // Return shape matching frontend ChatResponse type exactly
     return {
@@ -79,7 +64,7 @@ export class ChatService {
         metadata: assistantMsg.metadata,
       },
       suggestions: [],
-      updatedItinerary: result.plan ?? undefined,
+      updatedItinerary: undefined,
     };
   }
 }
